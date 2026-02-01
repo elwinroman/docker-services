@@ -1,0 +1,20 @@
+services:
+  loki:
+    image: grafana/loki:main
+    container_name: loki
+    restart: always
+    ports:
+      - "3100:3100"
+    env_file:
+      - .env
+    networks:
+      - monitor
+    volumes:
+      - ./config/loki-config.yml:/etc/loki/local-config.yml
+      - ./volumes-loki:/tmp/loki
+    command: -config.file=/etc/loki/local-config.yml
+
+networks:
+  monitor:
+    name: monitoring
+    external: true
