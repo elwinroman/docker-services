@@ -19,11 +19,6 @@ common:
 limits_config:
   retention_period: 720h # Duración de retención de logs (30 días)
   max_query_lookback: 720h   # Máximo tiempo de búsqueda hacia atrás
-  ingestion_rate: 5
-  ingestion_burst_size: 10
-  max_line_size: 256000
-  max_label_names_per_query: 100
-  max_label_value_length: 1024
 
 query_range:
   results_cache:
