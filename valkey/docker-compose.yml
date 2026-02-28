@@ -1,0 +1,17 @@
+services:
+  valkey:
+    image: valkey/valkey:8.0.2-alpine3.21
+    container_name: valkey_instance
+    command: ["valkey-server", "--save", "60", "1", "--appendonly", "yes", "--loglevel", "notice", "--requirepass", "${VALKEY_PASSWORD}"]
+    ports:
+      - "${VALKEY_PORT}:6379"
+    volumes:
+      - valkey_data:/data
+    env_file:
+      - .env
+    restart: unless-stopped
+
+volumes:
+  valkey_data:
+    # name: valkey_data
+    driver: local
