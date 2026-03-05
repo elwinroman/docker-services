@@ -3,17 +3,20 @@ services:
     image: grafana/grafana-oss:latest
     container_name: grafana
     restart: always
-    #user: "1001"
+    # user: "1001"
     ports:
-      - 3001:3000
+      - 3000:3000
     env_file:
       - .env
     networks:
       - monitor
     volumes:
-      - "./grafana-data:/var/lib/grafana"
+      - grafana-data:/var/lib/grafana
 
 networks:
   monitor:
     name: monitoring
     driver: bridge
+
+volumes:
+  grafana-data:

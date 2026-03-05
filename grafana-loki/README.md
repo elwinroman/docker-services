@@ -20,8 +20,16 @@ docker compose -f compose-loki.yml up -d
 
 ## URLs de acceso
 
-- **Grafana**: http://localhost:3001 (admin/admin)
+- **Grafana**: http://localhost:3000 (admin/admin)
 - **Loki API**: http://localhost:3100
+
+## Como probar que funciona
+Desde el contenedor de Grafana
+```shell
+docker exec -it grafana wget -qO- http://loki:3100/ready
+```
+
+Si responde `ready`, está funcionando perfecto. 
 
 ## Configurar Loki en Grafana
 
