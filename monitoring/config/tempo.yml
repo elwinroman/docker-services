@@ -1,0 +1,29 @@
+server:
+  # API HTTP usada por Grafana para consultar traces.
+  http_listen_port: 3200
+
+distributor:
+  receivers:
+    otlp:
+      protocols:
+        # Tempo recibe traces OTLP gRPC desde el Collector.
+        grpc:
+          endpoint: 0.0.0.0:4317
+        # Tempo también acepta OTLP HTTP si se requiere.
+        http:
+          endpoint: 0.0.0.0:4318
+
+storage:
+  trace:
+    # Almacenamiento local single-node.
+    backend: local
+    wal:
+      # Write-ahead log para recuperación.
+      path: /var/tempo/wal
+    local:
+      path: /var/tempo/traces
+
+compactor:
+  compaction:
+    # Retención de traces: 168h = 7 días.
+    block_retention: ${TEMPO_TRACE_RETENTION}

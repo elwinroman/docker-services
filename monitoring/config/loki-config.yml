@@ -1,0 +1,60 @@
+# Loki queda sin autenticación interna porque solo se expone dentro de la red Docker `monitoring`.
+# Si se publica hacia internet, protegerlo con Nginx/auth externa.
+auth_enabled: false
+
+server:
+  # API HTTP usada por Grafana y clientes de logs.
+  http_listen_port: 3100
+  # Puerto gRPC interno de Loki.
+  grpc_listen_port: 9096
+
+common:
+  # 0.0.0.0 permite escuchar dentro del contenedor en todas las interfaces.
+  instance_addr: 0.0.0.0
+  # Directorio base dentro del volumen `loki-data`.
+  path_prefix: /loki
+  storage:
+    filesystem:
+      # Almacenamiento local de chunks e índices. Suficiente para despliegue single-node.
+      chunks_directory: /loki/chunks
+      rules_directory: /loki/rules
+  # Single-node: no hay replicación.
+  replication_factor: 1
+  ring:
+    kvstore:
+      # Ring en memoria para despliegue local/single-node.
+      store: inmemory
+
+limits_config:
+  # Retención de logs: 720h = 30 días.
+  retention_period: ${LOKI_RETENTION_PERIOD}
+  # Máximo rango hacia atrás permitido en consultas.
+  max_query_lookback: ${LOKI_MAX_QUERY_LOOKBACK}
+  # Permite recibir logs con timestamps fuera de orden leve.
+  unordered_writes: true
+
+compactor:
+  # Requerido para aplicar retención y compactar datos TSDB.
+  working_directory: /loki/compactor
+  retention_enabled: true
+  delete_request_store: filesystem
+
+query_range:
+  results_cache:
+    cache:
+      embedded_cache:
+        # Cache en memoria para acelerar consultas repetidas.
+        enabled: true
+        max_size_mb: 100
+
+schema_config:
+  configs:
+    - from: 2020-10-24
+      # TSDB es el backend recomendado para Loki moderno en single binary.
+      store: tsdb
+      object_store: filesystem
+      schema: v13
+      index:
+        prefix: index_
+        # Loki crea particiones de índice cada 24h.
+        period: 24h

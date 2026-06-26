@@ -1,0 +1,42 @@
+global:
+  # Frecuencia global de recolección de métricas.
+  # 15s da buena resolución para dashboards de TPS/latencia sin ser demasiado agresivo.
+  scrape_interval: 15s
+  # Frecuencia de evaluación de reglas/alertas cuando se agreguen rules.
+  evaluation_interval: 15s
+
+# Prometheus conserva una ventana operativa local y replica muestras a VictoriaMetrics
+# para histórico de largo plazo mediante remote_write.
+remote_write:
+  - url: http://victoriametrics:8428/api/v1/write
+    queue_config:
+      # Valores conservadores para evitar picos de memoria en Prometheus.
+      max_samples_per_send: 5000
+      capacity: 10000
+      max_shards: 10
+
+scrape_configs:
+  # Métricas internas de Prometheus.
+  - job_name: prometheus
+    static_configs:
+      - targets: ["prometheus:9090"]
+
+  # Métricas internas de VictoriaMetrics.
+  - job_name: victoriametrics
+    static_configs:
+      - targets: ["victoriametrics:8428"]
+
+  # Métricas internas del Collector y métricas exportadas desde apps via OTLP.
+  - job_name: otel-collector
+    static_configs:
+      - targets: ["otel-collector:9464"]
+
+  # Métricas internas de Loki.
+  - job_name: loki
+    static_configs:
+      - targets: ["loki:3100"]
+
+  # Métricas internas de Tempo.
+  - job_name: tempo
+    static_configs:
+      - targets: ["tempo:3200"]
