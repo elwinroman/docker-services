@@ -28,9 +28,17 @@ exporters:
     endpoint: tempo:4317
     tls:
       insecure: true
+  otlphttp/loki:
+    # Loki recibe logs OTLP por HTTP en /otlp.
+    endpoint: http://loki:3100/otlp
 
 service:
   pipelines:
+    # Apps -> OTLP -> Collector -> Loki.
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/loki]
     # Apps -> OTLP -> Collector -> endpoint Prometheus :9464 -> Prometheus scrape.
     metrics:
       receivers: [otlp]

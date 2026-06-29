@@ -8,7 +8,7 @@ Este stack agrupa:
 - **Loki**: almacenamiento y consulta de logs.
 - **Prometheus**: almacenamiento y consulta de métricas operativas.
 - **VictoriaMetrics**: persistencia histórica de métricas.
-- **OpenTelemetry Collector**: entrada OTLP para métricas/traces generados por aplicaciones.
+- **OpenTelemetry Collector**: entrada OTLP para logs, métricas y traces generados por aplicaciones.
 - **Tempo**: almacenamiento y consulta de traces.
 
 Valkey se mantiene separado porque es cache/infraestructura de aplicación, no monitoreo.
@@ -17,8 +17,8 @@ Valkey se mantiene separado porque es cache/infraestructura de aplicación, no m
 
 ```txt
 Aplicaciones
-  ├─ logs  -> Loki
   └─ OTLP  -> OpenTelemetry Collector
+                ├─ logs     -> Loki
                 ├─ métricas -> endpoint :9464 -> Prometheus -> VictoriaMetrics
                 └─ traces   -> Tempo
 
@@ -34,7 +34,7 @@ Grafana
 ### Logs
 
 ```txt
-App -> Loki -> Grafana
+App -> OpenTelemetry Collector -> Loki -> Grafana
 ```
 
 Loki guarda logs en el volumen Docker `loki-data`.
@@ -45,6 +45,8 @@ Uso esperado:
 - auditoría operativa
 - búsqueda por labels/mensaje
 - correlación con `correlationId`, `session.id`, `userId`, etc.
+
+Los logs deben llegar al Collector por OTLP. Las aplicaciones no deberían depender directamente de Loki.
 
 ### Métricas
 
@@ -348,6 +350,7 @@ El Collector recibe datos OTLP desde las aplicaciones y los reenvía:
 
 | Pipeline | Entrada | Salida |
 | --- | --- | --- |
+| `logs` | OTLP gRPC/HTTP | Loki `http://loki:3100/otlp` |
 | `metrics` | OTLP gRPC/HTTP | Prometheus exporter `:9464` |
 | `traces` | OTLP gRPC/HTTP | Tempo `tempo:4317` |
 
@@ -366,10 +369,13 @@ Procesadores:
 | `memory_limiter` | Evita que el Collector exceda la memoria asignada. |
 | `batch` | Agrupa datos para reducir overhead. |
 
-La API no debe enviar traces directamente a Tempo. Debe enviar OTLP al Collector:
+La API no debe enviar datos directamente a Loki, Prometheus, VictoriaMetrics o Tempo. Debe enviar OTLP al Collector:
 
 ```txt
-App -> otel-collector:4318 -> tempo:4317
+App -> otel-collector:4318
+  ├─ logs    -> loki:3100/otlp
+  ├─ metrics -> otel-collector:9464 -> prometheus
+  └─ traces  -> tempo:4317
 ```
 
 La imagen del Collector se fija directamente en `compose.yml`:

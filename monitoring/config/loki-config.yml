@@ -26,6 +26,8 @@ common:
       store: inmemory
 
 limits_config:
+  # Requerido para consultar atributos OTLP como metadata estructurada sin convertir todo en labels.
+  allow_structured_metadata: true
   # Retención de logs: 720h = 30 días.
   retention_period: ${LOKI_RETENTION_PERIOD}
   # Máximo rango hacia atrás permitido en consultas.
