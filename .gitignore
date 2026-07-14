@@ -1,4 +1,8 @@
 .env
+**/.env
+.atl/
+.codegraph/
+aws/.env
 grafana-data/*
 influxdb2-data/*
 volumes-loki/*

@@ -23,6 +23,10 @@ exporters:
   prometheus:
     # Endpoint que Prometheus scrapea para leer métricas recibidas por OTLP.
     endpoint: 0.0.0.0:9464
+    # Convierte resource attributes OTEL (service.name, deployment.environment, etc.)
+    # en labels Prometheus para poder consultar por aplicación/ambiente en Grafana.
+    resource_to_telemetry_conversion:
+      enabled: true
   otlp/tempo:
     # Envío de traces a Tempo dentro de la red Docker.
     endpoint: tempo:4317
