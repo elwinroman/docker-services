@@ -1,0 +1,33 @@
+services:
+  redis:
+    image: redis:${REDIS_VERSION}
+    container_name: ${REDIS_CONTAINER_NAME}
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "yes", "--loglevel", "notice"]
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis_data:/data
+    env_file:
+      - .env
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -h 127.0.0.1 -p 6379 ping | grep PONG"]
+      interval: 30s
+      timeout: 10s
+      start_period: 10s
+      retries: 3
+    mem_limit: 256m
+    cpus: 0.25
+    deploy:
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 256M
+        reservations:
+          cpus: "0.10"
+          memory: 128M
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+    name: ${REDIS_DATA_VOLUME}
+    driver: local
