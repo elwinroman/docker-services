@@ -1,0 +1,74 @@
+services:
+  zookeeper:
+    image: bitnamilegacy/zookeeper:${ZOOKEEPER_VERSION}
+    container_name: ${ZOOKEEPER_CONTAINER_NAME}
+    ports:
+      - "${ZOOKEEPER_PORT}:2181"
+    environment:
+      ALLOW_ANONYMOUS_LOGIN: "yes"
+    volumes:
+      - zookeeper_data:/bitnami/zookeeper
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | timeout 5 bash -c 'cat > /dev/tcp/127.0.0.1/2181' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 20s
+      retries: 3
+    mem_limit: 512m
+    cpus: 0.50
+    deploy:
+      resources:
+        limits:
+          cpus: "0.50"
+          memory: 512M
+        reservations:
+          cpus: "0.25"
+          memory: 256M
+    restart: unless-stopped
+
+  kafka:
+    image: bitnamilegacy/kafka:${KAFKA_VERSION}
+    container_name: ${KAFKA_CONTAINER_NAME}
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "${KAFKA_PORT}:9094"
+    env_file:
+      - .env
+    environment:
+      KAFKA_CFG_BROKER_ID: ${KAFKA_BROKER_ID}
+      KAFKA_CFG_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_CFG_LISTENERS: PLAINTEXT://:9092,EXTERNAL://:9094
+      KAFKA_CFG_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,EXTERNAL://${KAFKA_ADVERTISED_HOST}:${KAFKA_PORT}
+      KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_CFG_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CFG_AUTO_CREATE_TOPICS_ENABLE: ${KAFKA_AUTO_CREATE_TOPICS_ENABLE}
+      ALLOW_PLAINTEXT_LISTENER: "yes"
+    volumes:
+      - kafka_data:/bitnami/kafka
+    mem_limit: 1g
+    cpus: 1.00
+    deploy:
+      resources:
+        limits:
+          cpus: "1.00"
+          memory: 1G
+        reservations:
+          cpus: "0.50"
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/bitnami/kafka/bin/kafka-topics.sh --bootstrap-server 127.0.0.1:9092 --list >/dev/null 2>&1 || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 60s
+      retries: 5
+    restart: unless-stopped
+
+volumes:
+  kafka_data:
+    name: ${KAFKA_DATA_VOLUME}
+    driver: local
+  zookeeper_data:
+    name: ${ZOOKEEPER_DATA_VOLUME}
+    driver: local
