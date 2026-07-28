@@ -1,0 +1,33 @@
+services:
+  mongodb:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: mongodb:4.4.14-local
+    container_name: ${MONGODB_CONTAINER_NAME}
+    ports:
+      - "${MONGODB_PORT}:27017"
+    volumes:
+      - mongodb_data:/data/db
+      - mongodb_config:/data/configdb
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGODB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGODB_ROOT_PASSWORD}
+      MONGO_INITDB_DATABASE: ${MONGODB_DATABASE}
+    healthcheck:
+      test: ["CMD-SHELL", "mongo --quiet --username \"$$MONGO_INITDB_ROOT_USERNAME\" --password \"$$MONGO_INITDB_ROOT_PASSWORD\" --authenticationDatabase admin --eval \"db.adminCommand('ping').ok\" localhost:27017/admin || exit 1"]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  mongodb_data:
+    name: ${MONGODB_DB_VOLUME}
+    driver: local
+  mongodb_config:
+    name: ${MONGODB_CONFIG_VOLUME}
+    driver: local
